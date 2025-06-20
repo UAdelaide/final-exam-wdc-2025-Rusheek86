@@ -13,7 +13,7 @@ app.use(session({
   cookie: { secure: false } // true if HTTPS
 }));
 
-// Setup your MySQL connection pool (adjust credentials)
+// Setup  MySQL connection pool 
 const pool = mysql.createPool({
   host: 'localhost',
   user: 'your_mysql_user',
@@ -33,7 +33,7 @@ app.post('/users/login', async (req, res) => {
 
     const user = rows[0];
 
-    // For now assume passwords stored in plaintext (or adjust with bcrypt)
+
     if (password !== user.password_hash) {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
