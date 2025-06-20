@@ -1,35 +1,35 @@
 const express = require('express');
-const session = require('express-session');
 const path = require('path');
+const session = require('express-session');
 
 const app = express();
 
-// Import routes
+// Import route files
 const userRoutes = require('./routes/userRoutes');
 const walkRoutes = require('./routes/walkRoutes');
 
-// Middleware
+// Middleware setup
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Sessions
+// Session config
 app.use(session({
-  secret: 'super-secret',
+  secret: 'supersecretkey',
   resave: false,
   saveUninitialized: true
 }));
 
-// Serve static files (e.g., login.html)
+// Static files (HTML/CSS/JS)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Route setup
+// Routes
 app.use('/users', userRoutes);
 app.use('/walks', walkRoutes);
 
-// Default route (optional)
+// Optional fallback to login page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Export app for use in bin/www
+// ✅ THIS LINE is crucial for `bin/www` to work
 module.exports = app;
