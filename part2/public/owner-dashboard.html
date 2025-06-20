@@ -1,135 +1,132 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Owner Dashboard - Dog Walking Service</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Owner Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 </head>
-<body class="bg-light">
-  <div id="app" class="container py-4">
+<body>
+  <div id="app" class="container mt-5">
     <h1 class="mb-4 text-primary">Owner Dashboard</h1>
 
-    <!-- Walk request form -->
-    <div class="card mb-4">
-      <div class="card-header bg-primary text-white">
-        Create New Walk Request
-      </div>
-      <div class="card-body">
-        <form @submit.prevent="submitWalkRequest">
-          <div class="mb-3">
-            <label class="form-label">Dog ID</label>
-            <input v-model="form.dog_id" type="number" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Requested Date & Time</label>
-            <input v-model="form.requested_time" type="datetime-local" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Duration (minutes)</label>
-            <input v-model="form.duration_minutes" type="number" class="form-control" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Location</label>
-            <input v-model="form.location" type="text" class="form-control" required>
-          </div>
-          <button type="submit" class="btn btn-success">Create Walk</button>
-        </form>
-      </div>
-    </div>
+    <!-- Logout Button -->
+    <button @click="logout" class="btn btn-danger mb-4">Logout</button>
 
-    <!-- Success or error messages -->
-    <div v-if="message" class="alert alert-info">{{ message }}</div>
-    <div v-if="error" class="alert alert-danger">{{ error }}</div>
+    <h2 class="mb-3">Request a Walk</h2>
 
-    <!-- List of walk requests -->
-    <h2 class="mb-3">My Walk Requests</h2>
-    <div class="row" v-if="walks.length > 0">
-      <div class="col-md-6 mb-4" v-for="walk in walks" :key="walk.request_id">
-        <div class="card">
-          <div class="card-body">
-            <h5 class="card-title">Request #{{ walk.request_id }}</h5>
-            <p class="card-text">
-              <strong>Dog:</strong> {{ walk.dog_name }} ({{ walk.size }})<br>
-              <strong>Date:</strong> {{ new Date(walk.requested_time).toLocaleString() }}<br>
-              <strong>Duration:</strong> {{ walk.duration_minutes }} minutes<br>
-              <strong>Location:</strong> {{ walk.location }}<br>
-              <strong>Status:</strong> {{ walk.status }}
-            </p>
-          </div>
-        </div>
+    <form @submit.prevent="submitWalkRequest">
+      <div class="mb-3">
+        <label for="dog-select" class="form-label">Dog</label>
+        <select id="dog-select" v-model="form.dog_id" class="form-select" required>
+          <option disabled value="">Select a dog</option>
+          <option v-for="dog in dogs" :key="dog.dog_id" :value="dog.dog_id">{{ dog.name }}</option>
+        </select>
       </div>
-    </div>
-    <p v-else>No walk requests yet.</p>
+
+      <div class="mb-3">
+        <label for="date-time" class="form-label">Requested Time</label>
+        <input id="date-time" type="datetime-local" v-model="form.requested_time" class="form-control" required />
+      </div>
+
+      <div class="mb-3">
+        <label for="duration" class="form-label">Duration (minutes)</label>
+        <input id="duration" type="number" v-model.number="form.duration_minutes" min="1" class="form-control" required />
+      </div>
+
+      <div class="mb-3">
+        <label for="location" class="form-label">Location</label>
+        <input id="location" type="text" v-model="form.location" class="form-control" required />
+      </div>
+
+      <button type="submit" class="btn btn-primary">Submit Request</button>
+    </form>
+
+    <p class="mt-3 text-success" v-if="message">{{ message }}</p>
+    <p class="mt-3 text-danger" v-if="error">{{ error }}</p>
   </div>
 
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   <script>
-    const { createApp, ref, onMounted } = Vue;
+    const { createApp, reactive, ref, onMounted } = Vue;
 
     createApp({
       setup() {
-        const form = ref({
+        const form = reactive({
           dog_id: '',
           requested_time: '',
-          duration_minutes: '',
+          duration_minutes: 30,
           location: ''
         });
 
-        const walks = ref([]);
+        const dogs = ref([]);
         const message = ref('');
         const error = ref('');
 
-        async function loadWalks() {
+        // Fetch dogs owned by user to populate the dog dropdown
+        async function fetchDogs() {
           try {
-            const res = await fetch('/api/walks');
-            walks.value = await res.json();
+            const res = await fetch('/owner/dogs');
+            dogs.value = await res.json();
           } catch (err) {
-            error.value = 'Failed to load walk requests';
+            error.value = 'Failed to load dogs';
           }
         }
 
+        // Submit new walk request
         async function submitWalkRequest() {
           try {
-            const res = await fetch('/api/walks', {
+            const res = await fetch('/owner/walkrequests', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(form.value)
+              body: JSON.stringify(form)
             });
-            const result = await res.json();
 
-            if (!res.ok) throw new Error(result.error || 'Error submitting walk request');
-
-            message.value = result.message;
+            if (!res.ok) {
+              throw new Error('Failed to submit walk request');
+            }
+            message.value = 'Walk request submitted successfully!';
             error.value = '';
-            form.value = {
-              dog_id: '',
-              requested_time: '',
-              duration_minutes: '',
-              location: ''
-            };
-            loadWalks();
+
+            // Reset form
+            form.dog_id = '';
+            form.requested_time = '';
+            form.duration_minutes = 30;
+            form.location = '';
+
           } catch (err) {
             error.value = err.message;
             message.value = '';
           }
         }
 
-        onMounted(() => {
-          loadWalks();
-        });
+        // Logout method
+        async function logout() {
+          try {
+            const res = await fetch('/logout', { method: 'GET' });
+            if (res.ok) {
+              window.location.href = '/';
+            } else {
+              throw new Error('Logout failed');
+            }
+          } catch (err) {
+            alert(err.message);
+          }
+        }
+
+        onMounted(fetchDogs);
 
         return {
           form,
-          walks,
+          dogs,
           message,
           error,
-          submitWalkRequest
+          submitWalkRequest,
+          logout
         };
       }
     }).mount('#app');
   </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
