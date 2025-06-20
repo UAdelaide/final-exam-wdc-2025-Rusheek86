@@ -25,15 +25,15 @@
 
     <form @submit.prevent="submitWalkRequest">
       <div class="mb-3">
-        <label for="dog-select" class="form-label">Dog</label>
+        <label for="dog-select" class="form-label">Select Your Dog</label>
         <select id="dog-select" v-model="form.dog_id" class="form-select" required>
-          <option disabled value="">Select a dog</option>
+          <option disabled value="">-- Choose a dog --</option>
           <option v-for="dog in dogs" :key="dog.dog_id" :value="dog.dog_id">{{ dog.name }}</option>
         </select>
       </div>
 
       <div class="mb-3">
-        <label for="date-time" class="form-label">Requested Time</label>
+        <label for="date-time" class="form-label">Requested Date & Time</label>
         <input id="date-time" type="datetime-local" v-model="form.requested_time" class="form-control" required />
       </div>
 
@@ -71,17 +71,18 @@
         const message = ref('');
         const error = ref('');
 
-        // Fetch dogs owned by user to populate the dog dropdown
+        // Fetch dogs owned by logged-in owner to populate dropdown
         async function fetchDogs() {
           try {
             const res = await fetch('/owner/dogs');
+            if (!res.ok) throw new Error('Failed to load dogs');
             dogs.value = await res.json();
           } catch (err) {
-            error.value = 'Failed to load dogs';
+            error.value = err.message;
           }
         }
 
-        // Submit new walk request
+        // Submit walk request
         async function submitWalkRequest() {
           try {
             const res = await fetch('/owner/walkrequests', {
@@ -91,24 +92,25 @@
             });
 
             if (!res.ok) {
-              throw new Error('Failed to submit walk request');
+              const errData = await res.json();
+              throw new Error(errData.error || 'Failed to submit walk request');
             }
+
             message.value = 'Walk request submitted successfully!';
             error.value = '';
 
-            // Reset form
+            // Reset form fields
             form.dog_id = '';
             form.requested_time = '';
             form.duration_minutes = 30;
             form.location = '';
-
           } catch (err) {
             error.value = err.message;
             message.value = '';
           }
         }
 
-        // Logout method
+        // Logout function clears session and redirects
         async function logout() {
           try {
             const res = await fetch('/logout', { method: 'GET' });
