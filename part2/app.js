@@ -150,6 +150,17 @@ app.get('/walker/walkrequests', requireLogin, requireRole('walker'), async (req,
   }
 });
 
+// New API endpoint: Fetch all dogs for homepage display (no login required)
+app.get('/api/dogs', async (req, res) => {
+  try {
+    const [dogs] = await db.execute('SELECT dog_id, name, size FROM Dogs ORDER BY dog_id ASC');
+    res.json(dogs);
+  } catch (err) {
+    console.error('Failed to fetch dogs:', err);
+    res.status(500).json({ error: 'Failed to fetch dogs' });
+  }
+});
+
 // Logout route
 app.get('/logout', (req, res) => {
   req.session.destroy(() => {
