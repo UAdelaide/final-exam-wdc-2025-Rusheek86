@@ -16,8 +16,8 @@
   <div class="card p-4 shadow-sm mb-5">
     <form @submit.prevent="loginUser">
       <div class="mb-3">
-        <label for="email" class="form-label">Email</label>
-        <input v-model="email" type="email" id="email" class="form-control" required />
+        <label for="username" class="form-label">Username</label>
+        <input v-model="username" type="text" id="username" class="form-control" required />
       </div>
       <div class="mb-3">
         <label for="password" class="form-label">Password</label>
@@ -62,7 +62,7 @@ const { createApp, ref, onMounted } = Vue;
 
 createApp({
   setup() {
-    const email = ref('');
+    const username = ref('');
     const password = ref('');
     const error = ref('');
     const dogs = ref([]);
@@ -73,7 +73,7 @@ createApp({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
-          body: JSON.stringify({ email: email.value, password: password.value }),
+          body: JSON.stringify({ username: username.value, password: password.value }),
         });
         const data = await res.json();
 
@@ -105,7 +105,10 @@ createApp({
           luna: 'beagle',
           rocky: 'bulldog',
           charlie: 'pug',
-          bella: 'dalmatian'
+          bella: 'dalmatian',
+          butter: 'goldenretriever',
+          lexi: 'shiba',
+          voilet: 'husky'
         };
 
         for (const dog of dogsData) {
@@ -129,7 +132,7 @@ createApp({
     onMounted(fetchDogs);
 
     return {
-      email,
+      username,
       password,
       error,
       dogs,
