@@ -15,8 +15,8 @@
   <div class="card p-4 shadow-sm">
     <form @submit.prevent="loginUser">
       <div class="mb-3">
-        <label for="username" class="form-label">Email</label>
-        <input v-model="username" type="email" id="username" class="form-control" required>
+        <label for="email" class="form-label">Email</label>
+        <input v-model="email" type="email" id="email" class="form-control" required>
       </div>
       <div class="mb-3">
         <label for="password" class="form-label">Password</label>
@@ -35,7 +35,7 @@ createApp({
   data() {
     return {
       message: 'Welcome to the Dog Walking Service!',
-      username: '',
+      email: '',
       password: '',
       error: ''
     };
@@ -43,13 +43,12 @@ createApp({
   methods: {
     async loginUser() {
       try {
-        const res = await fetch('/api/users/login', {
+        const res = await fetch('/users/login', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          credentials: 'include', // ensures cookie session is saved
-          body: JSON.stringify({ email: this.username, password: this.password })
+          credentials: 'include',
+          body: JSON.stringify({ email: this.email, password: this.password })
         });
-
         const data = await res.json();
         if (res.ok) {
           if (data.user.role === 'owner') {
@@ -64,7 +63,6 @@ createApp({
         }
       } catch (err) {
         this.error = 'Server error';
-        console.error(err);
       }
     }
   }
