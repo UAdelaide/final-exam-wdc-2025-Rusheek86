@@ -13,20 +13,21 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(session({
-  secret: 'your_strong_secret_here',
+  secret: 'your_strong_secret_here',  // change to a strong secret in production
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // set true if HTTPS
+  cookie: { secure: false }  // set to true if HTTPS
 }));
 
 let db;
 
+// Initialize database connection and create DB if not exists
 (async () => {
   try {
     const connection = await mysql.createConnection({
       host: 'localhost',
       user: 'root',
-      password: ''
+      password: ''  // update with your DB password if needed
     });
     await connection.query('CREATE DATABASE IF NOT EXISTS DogWalkService');
     await connection.end();
@@ -61,19 +62,19 @@ function requireRole(role) {
   };
 }
 
-// Login route
+// POST login route
 app.post('/users/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { userId, password } = req.body;  // assuming login uses userId now
 
   try {
-    const [users] = await db.execute('SELECT * FROM Users WHERE email = ?', [email]);
+    const [users] = await db.execute('SELECT * FROM Users WHERE user_id = ?', [userId]);
     if (users.length === 0) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid user ID or password' });
     }
     const user = users[0];
 
     if (password !== user.password_hash) {
-      return res.status(401).json({ error: 'Invalid email or password' });
+      return res.status(401).json({ error: 'Invalid user ID or password' });
     }
 
     req.session.userId = user.user_id;
@@ -88,17 +89,17 @@ app.post('/users/login', async (req, res) => {
   }
 });
 
-// Owner dashboard page
+// Serve owner dashboard page (only logged in owners)
 app.get('/owner-dashboard', requireLogin, requireRole('owner'), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'owner-dashboard.html'));
 });
 
-// Walker dashboard page
+// Serve walker dashboard page (only logged in walkers)
 app.get('/walker-dashboard', requireLogin, requireRole('walker'), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'walker-dashboard.html'));
 });
 
-// Fetch dogs owned by logged-in owner for dropdown
+// Fetch dogs owned by logged-in owner (for dropdown/select)
 app.get('/owner/dogs', requireLogin, requireRole('owner'), async (req, res) => {
   try {
     const ownerId = req.session.userId;
@@ -124,7 +125,6 @@ app.get('/owner/walkrequests', requireLogin, requireRole('owner'), async (req, r
       WHERE d.owner_id = ?
       ORDER BY wr.requested_time DESC
     `, [ownerId]);
-
     res.json(walks);
   } catch (err) {
     console.error(err);
@@ -142,7 +142,6 @@ app.get('/walker/walkrequests', requireLogin, requireRole('walker'), async (req,
       WHERE wr.status = 'open'
       ORDER BY wr.requested_time ASC
     `);
-
     res.json(walks);
   } catch (err) {
     console.error(err);
@@ -150,7 +149,7 @@ app.get('/walker/walkrequests', requireLogin, requireRole('walker'), async (req,
   }
 });
 
-// New API endpoint: Fetch all dogs for homepage display (no login required)
+// New API endpoint: fetch all dogs for homepage (no login required)
 app.get('/api/dogs', async (req, res) => {
   try {
     const [dogs] = await db.execute('SELECT dog_id, name, size FROM Dogs ORDER BY dog_id ASC');
@@ -161,15 +160,15 @@ app.get('/api/dogs', async (req, res) => {
   }
 });
 
-// Logout route
+// Logout route (clears session and redirects to login)
 app.get('/logout', (req, res) => {
   req.session.destroy(() => {
-    res.clearCookie('connect.sid'); // clear session cookie
-    res.redirect('/'); // redirect to login page
+    res.clearCookie('connect.sid');
+    res.redirect('/');
   });
 });
 
-// Serve static files (login page, dashboards, etc.)
+// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
 module.exports = app;
