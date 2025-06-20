@@ -11,6 +11,9 @@
   <div id="app" class="container py-4">
     <h1 class="mb-4 text-success">Walker Dashboard</h1>
 
+    <!-- Logout Button -->
+    <button @click="logout" class="btn btn-danger mb-4">Logout</button>
+
     <!-- Alert messages -->
     <div v-if="message" class="alert alert-info">{{ message }}</div>
     <div v-if="error" class="alert alert-danger">{{ error }}</div>
@@ -27,7 +30,7 @@
               <strong>Location:</strong> {{ walk.location }}<br>
               <strong>Owner:</strong> {{ walk.owner_name }}
             </p>
-            <button type=button class="btn btn-outline-success" @click="applyToWalk(walk.request_id)">Apply</button>
+            <button type="button" class="btn btn-outline-success" @click="applyToWalk(walk.request_id)">Apply</button>
           </div>
         </div>
       </div>
@@ -74,6 +77,20 @@
           }
         }
 
+        // Logout method
+        async function logout() {
+          try {
+            const res = await fetch('/logout', { method: 'GET' });
+            if (res.ok) {
+              window.location.href = '/';
+            } else {
+              throw new Error('Logout failed');
+            }
+          } catch (err) {
+            alert(err.message);
+          }
+        }
+
         onMounted(() => {
           loadWalkRequests();
         });
@@ -82,7 +99,8 @@
           walks,
           message,
           error,
-          applyToWalk
+          applyToWalk,
+          logout
         };
       }
     }).mount('#app');
