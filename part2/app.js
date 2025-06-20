@@ -1,174 +1,147 @@
-const express = require('express');
-const path = require('path');
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
-const mysql = require('mysql2/promise');
-const session = require('express-session');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dog Walking Service Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body class="bg-light">
 
-const app = express();
+<div id="app" class="container py-5">
+  <h1 class="mb-4 text-primary">Welcome to the Dog Walking Service!</h1>
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
+  <!-- Login Form -->
+  <div class="card p-4 shadow-sm mb-5">
+    <form @submit.prevent="loginUser">
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input v-model="username" type="text" id="username" class="form-control" required />
+      </div>
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input v-model="password" type="password" id="password" class="form-control" required />
+      </div>
+      <button type="submit" class="btn btn-primary">Login</button>
+    </form>
+    <p class="text-danger mt-3" v-if="error">{{ error }}</p>
+  </div>
 
-app.use(session({
-  secret: 'your_strong_secret_here',  // change to a strong secret in production
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false }  // set to true if HTTPS
-}));
+  <!-- Dogs Table -->
+  <h2 class="mb-3">All Registered Dogs</h2>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Dog ID</th>
+        <th>Name</th>
+        <th>Size</th>
+        <th>Image</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="dog in dogs" :key="dog.dog_id">
+        <td>{{ dog.dog_id }}</td>
+        <td>{{ dog.name }}</td>
+        <td>{{ dog.size }}</td>
+        <td>
+          <img
+            :src="dog.imageUrl"
+            alt="Dog Image"
+            style="max-width: 100px; max-height: 80px; object-fit: contain;"
+          />
+        </td>
+      </tr>
+    </tbody>
+  </table>
 
-let db;
+</div>
 
-// Initialize database connection and create DB if not exists
-(async () => {
-  try {
-    const connection = await mysql.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: ''  // update with your DB password if needed
-    });
-    await connection.query('CREATE DATABASE IF NOT EXISTS DogWalkService');
-    await connection.end();
+<script>
+const { createApp, ref, onMounted } = Vue;
 
-    db = await mysql.createConnection({
-      host: 'localhost',
-      user: 'root',
-      password: '',
-      database: 'DogWalkService'
-    });
+createApp({
+  setup() {
+    const username = ref('');
+    const password = ref('');
+    const error = ref('');
+    const dogs = ref([]);
 
-  } catch (err) {
-    console.error('DB setup error:', err);
-  }
-})();
+    async function loginUser() {
+      try {
+        const res = await fetch('/users/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ username: username.value, password: password.value }),
+        });
+        const data = await res.json();
 
-// Middleware to require login
-function requireLogin(req, res, next) {
-  if (!req.session.userId) {
-    return res.status(401).send('Unauthorized');
-  }
-  next();
-}
-
-// Middleware to require specific role
-function requireRole(role) {
-  return (req, res, next) => {
-    if (req.session.role !== role) {
-      return res.status(403).send('Forbidden');
+        if (res.ok) {
+          if (data.user.role === 'owner') {
+            window.location.href = 'owner-dashboard.html';
+          } else if (data.user.role === 'walker') {
+            window.location.href = 'walker-dashboard.html';
+          } else {
+            error.value = 'Unknown user role.';
+          }
+        } else {
+          error.value = data.error || 'Login failed';
+        }
+      } catch {
+        error.value = 'Server error';
+      }
     }
-    next();
-  };
-}
 
-// POST login route
-app.post('/users/login', async (req, res) => {
-  const { userId, password } = req.body;  // assuming login uses userId now
+    // Fetch all dogs and their images with breed mapping
+    async function fetchDogs() {
+      try {
+        const res = await fetch('/api/dogs');
+        const dogsData = await res.json();
 
-  try {
-    const [users] = await db.execute('SELECT * FROM Users WHERE user_id = ?', [userId]);
-    if (users.length === 0) {
-      return res.status(401).json({ error: 'Invalid user ID or password' });
+        // Map dog names to dog.ceo breeds (adjust names as needed)
+        const breedMap = {
+          max: 'labrador',
+          luna: 'beagle',
+          rocky: 'bulldog',
+          charlie: 'pug',
+          bella: 'dalmatian',
+          butter: 'goldenretriever',
+          lexi: 'shiba',
+          voilet: 'husky'
+        };
+
+        for (const dog of dogsData) {
+          const breed = breedMap[dog.name.toLowerCase()] || 'hound';
+
+          try {
+            const imgRes = await fetch(`https://dog.ceo/api/breed/${breed}/images/random`);
+            const imgData = await imgRes.json();
+            dog.imageUrl = imgData.status === 'success' ? imgData.message : 'https://via.placeholder.com/100x80?text=No+Image';
+          } catch {
+            dog.imageUrl = 'https://via.placeholder.com/100x80?text=No+Image';
+          }
+        }
+
+        dogs.value = dogsData;
+      } catch {
+        dogs.value = [];
+      }
     }
-    const user = users[0];
 
-    if (password !== user.password_hash) {
-      return res.status(401).json({ error: 'Invalid user ID or password' });
-    }
+    onMounted(fetchDogs);
 
-    req.session.userId = user.user_id;
-    req.session.role = user.role;
-    req.session.username = user.username;
-
-    res.json({ user: { id: user.user_id, role: user.role, username: user.username } });
-
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Server error' });
+    return {
+      username,
+      password,
+      error,
+      dogs,
+      loginUser,
+    };
   }
-});
+}).mount('#app');
+</script>
 
-// Serve owner dashboard page (only logged in owners)
-app.get('/owner-dashboard', requireLogin, requireRole('owner'), (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'owner-dashboard.html'));
-});
-
-// Serve walker dashboard page (only logged in walkers)
-app.get('/walker-dashboard', requireLogin, requireRole('walker'), (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'walker-dashboard.html'));
-});
-
-// Fetch dogs owned by logged-in owner (for dropdown/select)
-app.get('/owner/dogs', requireLogin, requireRole('owner'), async (req, res) => {
-  try {
-    const ownerId = req.session.userId;
-    const [dogs] = await db.execute(
-      'SELECT dog_id, name FROM Dogs WHERE owner_id = ?',
-      [ownerId]
-    );
-    res.json(dogs);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch dogs' });
-  }
-});
-
-// Fetch owner walk requests
-app.get('/owner/walkrequests', requireLogin, requireRole('owner'), async (req, res) => {
-  try {
-    const ownerId = req.session.userId;
-    const [walks] = await db.execute(`
-      SELECT wr.walk_id, d.name AS dog_name, wr.requested_time, wr.duration_minutes, wr.location, wr.status
-      FROM WalkRequests wr
-      JOIN Dogs d ON wr.dog_id = d.dog_id
-      WHERE d.owner_id = ?
-      ORDER BY wr.requested_time DESC
-    `, [ownerId]);
-    res.json(walks);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch walk requests' });
-  }
-});
-
-// Fetch walker walk requests (only open)
-app.get('/walker/walkrequests', requireLogin, requireRole('walker'), async (req, res) => {
-  try {
-    const [walks] = await db.execute(`
-      SELECT wr.walk_id, d.name AS dog_name, wr.requested_time, wr.duration_minutes, wr.location, wr.status
-      FROM WalkRequests wr
-      JOIN Dogs d ON wr.dog_id = d.dog_id
-      WHERE wr.status = 'open'
-      ORDER BY wr.requested_time ASC
-    `);
-    res.json(walks);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch walk requests' });
-  }
-});
-
-// New API endpoint: fetch all dogs for homepage (no login required)
-app.get('/api/dogs', async (req, res) => {
-  try {
-    const [dogs] = await db.execute('SELECT dog_id, name, size FROM Dogs ORDER BY dog_id ASC');
-    res.json(dogs);
-  } catch (err) {
-    console.error('Failed to fetch dogs:', err);
-    res.status(500).json({ error: 'Failed to fetch dogs' });
-  }
-});
-
-// Logout route (clears session and redirects to login)
-app.get('/logout', (req, res) => {
-  req.session.destroy(() => {
-    res.clearCookie('connect.sid');
-    res.redirect('/');
-  });
-});
-
-// Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
-
-module.exports = app;
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
