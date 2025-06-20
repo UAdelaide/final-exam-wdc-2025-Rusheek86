@@ -124,8 +124,8 @@ function updatePosts() {
 
     }
 
-
 }
+
 
 /*
  * Loads posts from the server
@@ -174,6 +174,9 @@ function downvote(index) {
 }
 
 
+/*
+ * Submits the login form using fetch instead of XMLHttpRequest
+ */
 function login(){
 
     let user = {
@@ -181,33 +184,37 @@ function login(){
         pass: document.getElementById('password').value
     };
 
-    // Create AJAX Request
-    var xmlhttp = new XMLHttpRequest();
-
-    // Define function to run on response
-    xmlhttp.onreadystatechange = function() {
-        if (this.readyState == 4 && this.status == 200) {
-            alert("Welcome "+this.responseText);
-        } else if (this.readyState == 4 && this.status >= 400) {
-            alert("Login failed");
+    // Send the login request using fetch
+    fetch('/users/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(user)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Login failed');
         }
-    };
-
-    // Open connection to server & send the post data using a POST request
-    // We will cover POST requests in more detail in week 8
-    xmlhttp.open("POST", "/users/login", true);
-    xmlhttp.setRequestHeader("Content-type", "application/json");
-    xmlhttp.send(JSON.stringify(user));
-
+        return response.text();
+    })
+    .then(data => {
+        alert("Welcome " + data);
+        // Redirect logic can be added here if needed
+    })
+    .catch(error => {
+        alert(error.message);
+    });
 }
 
+
+/*
+ * Logs the user out using fetch
+ */
 function logout(){
 
-    // Create AJAX Request
-    var xmlhttp = new XMLHttpRequest();
-
-    // Open connection to server & send the post data using a POST request
-    xmlhttp.open("POST", "/users/logout", true);
-    xmlhttp.send();
-
+    // Send the logout request using fetch
+    fetch('/users/logout', {
+        method: 'POST'
+    });
 }
