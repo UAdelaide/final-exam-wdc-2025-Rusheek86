@@ -1,34 +1,38 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const usersRouter = require('./routes/users');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware to parse JSON and URL-encoded bodies
+// Load route files
+const userRoutes = require('./routes/userRoutes');
+const walkRoutes = require('./routes/walkRoutes');
+
+// Middleware to parse JSON and URL-encoded data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Setup sessions
+// Session setup
 app.use(session({
-  secret: 'super-secret-key', // You can replace this with a more secure key
+  secret: 'top-secret-session-key',
   resave: false,
   saveUninitialized: true
 }));
 
-// Serve static files (like login.html) from the 'public' folder
+// Serve static files from public folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Use the users route for login, logout, register etc.
-app.use('/users', usersRouter);
+// Mount routes
+app.use('/users', userRoutes);  // login, logout, register, etc.
+app.use('/walks', walkRoutes);  // walk-related endpoints if needed
 
-// Default route to show basic message (optional)
+// Default route
 app.get('/', (req, res) => {
-  res.send('Welcome to the Dog Walking Service API');
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Start the server
+// Start server
 app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
