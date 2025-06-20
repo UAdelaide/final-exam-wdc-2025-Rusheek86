@@ -99,16 +99,13 @@ createApp({
         const res = await fetch('/api/dogs');
         const dogsData = await res.json();
 
-        // Map dog names to dog.ceo breeds
+        // Map dog names to dog.ceo breeds (adjust as needed)
         const breedMap = {
           max: 'labrador',
-          luna: 'beagle',
-          rocky: 'bulldog',
-          charlie: 'pug',
-          bella: 'dalmatian',
+          voilet: 'husky',
           butter: 'goldenretriever',
           lexi: 'shiba',
-          voilet: 'husky'
+          bella: 'dalmatian'
         };
 
         for (const dog of dogsData) {
