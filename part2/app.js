@@ -16,7 +16,7 @@ app.use(session({
   secret: 'your_strong_secret_here',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // set to true if HTTPS
+  cookie: { secure: false } // true if HTTPS
 }));
 
 let db;
@@ -90,12 +90,12 @@ app.post('/users/login', async (req, res) => {
 
 // Owner dashboard (basic welcome)
 app.get('/owner-dashboard', requireLogin, requireRole('owner'), (req, res) => {
-  res.send(`Welcome to Owner Dashboard, ${req.session.username}!`);
+  res.sendFile(path.join(__dirname, 'public', 'owner-dashboard.html'));
 });
 
 // Walker dashboard (basic welcome)
 app.get('/walker-dashboard', requireLogin, requireRole('walker'), (req, res) => {
-  res.send(`Welcome to Walker Dashboard, ${req.session.username}!`);
+  res.sendFile(path.join(__dirname, 'public', 'walker-dashboard.html'));
 });
 
 // Owner walk requests
@@ -138,7 +138,8 @@ app.get('/walker/walkrequests', requireLogin, requireRole('walker'), async (req,
 // Logout route
 app.get('/logout', (req, res) => {
   req.session.destroy(() => {
-    res.redirect('/');
+    res.clearCookie('connect.sid'); // clear session cookie
+    res.redirect('/');  // redirect to login page
   });
 });
 
