@@ -16,7 +16,7 @@ app.use(session({
   secret: 'your_strong_secret_here',
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // true if HTTPS
+  cookie: { secure: false } // set true if HTTPS
 }));
 
 let db;
@@ -88,17 +88,32 @@ app.post('/users/login', async (req, res) => {
   }
 });
 
-// Owner dashboard (basic welcome)
+// Owner dashboard page
 app.get('/owner-dashboard', requireLogin, requireRole('owner'), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'owner-dashboard.html'));
 });
 
-// Walker dashboard (basic welcome)
+// Walker dashboard page
 app.get('/walker-dashboard', requireLogin, requireRole('walker'), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'walker-dashboard.html'));
 });
 
-// Owner walk requests
+// Fetch dogs owned by logged-in owner for dropdown
+app.get('/owner/dogs', requireLogin, requireRole('owner'), async (req, res) => {
+  try {
+    const ownerId = req.session.userId;
+    const [dogs] = await db.execute(
+      'SELECT dog_id, name FROM Dogs WHERE owner_id = ?',
+      [ownerId]
+    );
+    res.json(dogs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch dogs' });
+  }
+});
+
+// Fetch owner walk requests
 app.get('/owner/walkrequests', requireLogin, requireRole('owner'), async (req, res) => {
   try {
     const ownerId = req.session.userId;
@@ -117,7 +132,7 @@ app.get('/owner/walkrequests', requireLogin, requireRole('owner'), async (req, r
   }
 });
 
-// Walker walk requests (open only)
+// Fetch walker walk requests (only open)
 app.get('/walker/walkrequests', requireLogin, requireRole('walker'), async (req, res) => {
   try {
     const [walks] = await db.execute(`
@@ -139,11 +154,11 @@ app.get('/walker/walkrequests', requireLogin, requireRole('walker'), async (req,
 app.get('/logout', (req, res) => {
   req.session.destroy(() => {
     res.clearCookie('connect.sid'); // clear session cookie
-    res.redirect('/');  // redirect to login page
+    res.redirect('/'); // redirect to login page
   });
 });
 
-// Serve static files (Vue login page, dashboards, etc.)
+// Serve static files (login page, dashboards, etc.)
 app.use(express.static(path.join(__dirname, 'public')));
 
 module.exports = app;
