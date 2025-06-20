@@ -2,50 +2,47 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>DOGZ!</title>
-  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <title>DOG OF THE DAY</title>
+  <script src="https://unpkg.com/vue@3"></script>
   <style>
     body {
       background: repeating-linear-gradient(45deg, red, yellow 10px, green 20px);
-      font-family: Comic Sans MS, cursive;
-      font-size: 18px;
-      animation: flash 0.7s infinite;
+      font-family: Comic Sans MS;
+      animation: flash 1s infinite;
+      text-align: center;
+      color: cyan;
     }
 
     @keyframes flash {
-      0% { background-color: black; color: white; }
-      50% { background-color: white; color: black; }
-      100% { background-color: black; color: white; }
+      0% { background-color: black; }
+      50% { background-color: white; }
+      100% { background-color: black; }
     }
 
     .dog-card {
-      margin: 20px;
-      padding: 40px;
-      border: 12px dotted orange;
-      cursor: none;
-      font-size: 22px;
-      text-align: center;
+      border: 10px dashed orange;
+      padding: 30px;
+      margin: 50px;
+      font-size: 20px;
     }
 
     button {
-      padding: 25px;
-      font-size: 28px;
-      background: cyan;
+      padding: 20px;
+      font-size: 20px;
+      background-color: cyan;
       color: purple;
-      border-radius: 20px;
-      margin-top: 30px;
     }
   </style>
 </head>
 <body>
   <div id="app">
-    <h1 @mouseover="loadDogs">DOG OF THE DAY 🐾🐾🐾</h1>
-    <div class="dog-card" @mousemove="loadDogs">
+    <h1>DOG OF THE DAY 🐾🐾🐾</h1>
+    <div class="dog-card">
       <img :src="dogImage" alt="dog" width="400">
       <p>Name: SPARKY</p>
       <p>Breed: MAGICAL MIXED THING</p>
-      <p>Description: BEST DOG EVER OMG 😍🐶🐾🐾</p>
-      <button @click="loadDogs">Show Me Another Dog</button>
+      <p>Description: BEST DOG EVER OMG 😍🐾</p>
+      <button @click="loadDog">Show Me Another Dog</button>
     </div>
   </div>
 
@@ -54,19 +51,17 @@
 
     createApp({
       data() {
-        return {
-          dogImage: ''
-        };
+        return { dogImage: '' };
       },
       methods: {
-        async loadDogs() {
+        async loadDog() {
           const res = await fetch('https://dog.ceo/api/breeds/image/random');
           const data = await res.json();
           this.dogImage = data.message;
         }
       },
       mounted() {
-        this.loadDogs();
+        this.loadDog();
       }
     }).mount('#app');
   </script>
