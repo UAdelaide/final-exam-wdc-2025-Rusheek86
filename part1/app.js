@@ -1,15 +1,7 @@
 const express = require('express');
 const mysql = require('mysql2/promise');
-const logger = require('morgan');
-const cookieParser = require('cookie-parser');
 
 const app = express();
-
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-
 let db;
 
 (async () => {
@@ -17,7 +9,7 @@ let db;
     const connection = await mysql.createConnection({
       host: 'localhost',
       user: 'root',
-      password: '' // Update this if your MySQL password is different
+      password: ''
     });
 
     await connection.query('CREATE DATABASE IF NOT EXISTS dogwalks');
@@ -30,41 +22,34 @@ let db;
       database: 'dogwalks'
     });
 
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS dogs (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(100),
-        breed VARCHAR(100)
-      )
-    `);
+    await db.execute(`CREATE TABLE IF NOT EXISTS dogs (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100),
+      breed VARCHAR(100)
+    )`);
 
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS walkers (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(100)
-      )
-    `);
+    await db.execute(`CREATE TABLE IF NOT EXISTS walkers (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      name VARCHAR(100)
+    )`);
 
-    await db.execute(`
-      CREATE TABLE IF NOT EXISTS walkrequests (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        dog_id INT,
-        walker_id INT,
-        status VARCHAR(20),
-        FOREIGN KEY (dog_id) REFERENCES dogs(id),
-        FOREIGN KEY (walker_id) REFERENCES walkers(id)
-      )
-    `);
+    await db.execute(`CREATE TABLE IF NOT EXISTS walkrequests (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      dog_id INT,
+      walker_id INT,
+      status VARCHAR(20),
+      FOREIGN KEY (dog_id) REFERENCES dogs(id),
+      FOREIGN KEY (walker_id) REFERENCES walkers(id)
+    )`);
 
     const [[{ count }]] = await db.execute('SELECT COUNT(*) AS count FROM dogs');
     if (count === 0) {
       await db.execute(`INSERT INTO dogs (name, breed) VALUES ('Buddy', 'Beagle'), ('Luna', 'Labrador')`);
       await db.execute(`INSERT INTO walkers (name) VALUES ('Alice'), ('Bob')`);
       await db.execute(`INSERT INTO walkrequests (dog_id, walker_id, status) VALUES (1, 1, 'open'), (2, 2, 'closed')`);
-      console.log('Seed data inserted.');
     }
   } catch (err) {
-    console.error('Error setting up database. Is MySQL running?', err.message);
+    console.error('Database setup failed:', err.message);
   }
 })();
 
@@ -73,7 +58,7 @@ app.get('/api/dogs', async (req, res) => {
     const [rows] = await db.execute('SELECT * FROM dogs');
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch dogs', details: err.message });
+    res.status(500).json({ error: 'Could not get dogs' });
   }
 });
 
@@ -82,26 +67,24 @@ app.get('/api/walkrequests/open', async (req, res) => {
     const [rows] = await db.execute("SELECT * FROM walkrequests WHERE status = 'open'");
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch open walk requests', details: err.message });
+    res.status(500).json({ error: 'Could not get open walk requests' });
   }
 });
 
 app.get('/api/walkers/summary', async (req, res) => {
   try {
     const [rows] = await db.execute(`
-      SELECT w.id, w.name, COUNT(r.id) AS total_walks
-      FROM walkers w
-      LEFT JOIN walkrequests r ON w.id = r.walker_id
-      GROUP BY w.id, w.name
+      SELECT walkers.id, walkers.name, COUNT(walkrequests.id) AS total_walks
+      FROM walkers
+      LEFT JOIN walkrequests ON walkers.id = walkrequests.walker_id
+      GROUP BY walkers.id, walkers.name
     `);
     res.json(rows);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch walkers summary', details: err.message });
+    res.status(500).json({ error: 'Could not get walkers summary' });
   }
 });
 
-const PORT = 8080;
-app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+app.listen(8080, () => {
+  console.log('Server listening on http://localhost:8080');
 });
-
