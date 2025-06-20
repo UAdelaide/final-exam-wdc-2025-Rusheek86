@@ -93,44 +93,34 @@ createApp({
       }
     }
 
-    // Fetch all dogs and their images
+    // Fetch all dogs and their images with breed mapping
     async function fetchDogs() {
       try {
         const res = await fetch('/api/dogs');
         const dogsData = await res.json();
 
-        // Map dog names to Dog CEO breed keys (customize as needed)
+        // Map dog names to dog.ceo breeds
         const breedMap = {
-          max: 'retriever/golden',
-          luna: 'husky',
-          // add other mappings here if you know the breeds
+          max: 'labrador',
+          luna: 'beagle',
+          rocky: 'bulldog',
+          charlie: 'pug',
+          bella: 'dalmatian'
         };
 
-        // Fetch images in parallel with Promise.all
-        const dogsWithImages = await Promise.all(
-          dogsData.map(async (dog) => {
-            const breedKey = breedMap[dog.name.toLowerCase()] || null;
+        for (const dog of dogsData) {
+          const breed = breedMap[dog.name.toLowerCase()] || 'hound';
 
-            if (breedKey) {
-              try {
-                const imgRes = await fetch(`https://dog.ceo/api/breed/${breedKey}/images/random`);
-                const imgData = await imgRes.json();
-                dog.imageUrl = imgData.status === 'success'
-                  ? imgData.message
-                  : 'https://via.placeholder.com/100x80?text=No+Image';
-              } catch {
-                dog.imageUrl = 'https://via.placeholder.com/100x80?text=No+Image';
-              }
-            } else {
-              // Use a generic placeholder if no breed mapping
-              dog.imageUrl = 'https://via.placeholder.com/100x80?text=Dog+Image';
-            }
+          try {
+            const imgRes = await fetch(`https://dog.ceo/api/breed/${breed}/images/random`);
+            const imgData = await imgRes.json();
+            dog.imageUrl = imgData.status === 'success' ? imgData.message : 'https://via.placeholder.com/100x80?text=No+Image';
+          } catch {
+            dog.imageUrl = 'https://via.placeholder.com/100x80?text=No+Image';
+          }
+        }
 
-            return dog;
-          })
-        );
-
-        dogs.value = dogsWithImages;
+        dogs.value = dogsData;
       } catch {
         dogs.value = [];
       }
@@ -145,7 +135,7 @@ createApp({
       dogs,
       loginUser,
     };
-  },
+  }
 }).mount('#app');
 </script>
 
