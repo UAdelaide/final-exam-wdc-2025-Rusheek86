@@ -100,9 +100,8 @@ app.get('/api/walkers/summary', async (req, res) => {
   }
 });
 
-const PORT = 3000;
+const PORT = 8080;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
 
-module.exports = app;
