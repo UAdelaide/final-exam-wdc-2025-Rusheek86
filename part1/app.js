@@ -17,7 +17,7 @@ let db;
       database: 'DogWalkService'
     });
 
-    console.log("✅ Connected to DogWalkService database");
+    console.log("Connected to DogWalkService database");
 
     // Optional: You can also insert default test data here, if needed.
   } catch (error) {
