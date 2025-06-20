@@ -8,11 +8,18 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 </head>
 <body class="bg-light">
-  <div id="app" class="container py-4">
-    <h1 class="mb-4 text-success">Walker Dashboard</h1>
+  <div id="app" class="container py-4 position-relative">
 
-    <!-- Logout Button -->
-    <button @click="logout" class="btn btn-danger mb-4">Logout</button>
+    <!-- Logout Button fixed top right -->
+    <button
+      @click="logout"
+      class="btn btn-danger position-absolute top-0 end-0 m-3"
+      style="z-index: 1000;"
+    >
+      Logout
+    </button>
+
+    <h1 class="mb-4 text-success">Walker Dashboard</h1>
 
     <!-- Alert messages -->
     <div v-if="message" class="alert alert-info">{{ message }}</div>
