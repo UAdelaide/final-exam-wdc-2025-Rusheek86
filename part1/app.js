@@ -7,7 +7,7 @@ app.use(express.json());
 
 let db;
 
-// Create DB connection
+// Database connection
 (async () => {
   try {
     db = await mysql.createConnection({
