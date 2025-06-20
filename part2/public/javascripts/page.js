@@ -27,7 +27,7 @@ function showMain(){
 }
 
 /*
- * Creates a new question/post & send it to the server, before triggering an update for the main part of the page.
+ * Creates a new question/post & sends it to the server, before triggering an update for the main part of the page.
  */
 function createPost(){
 
@@ -64,17 +64,14 @@ function createPost(){
  * Updates the search term then reloads the posts shown
  */
 function searchPosts(){
-
     search = document.getElementById('post-search').value.toUpperCase();
     updatePosts();
-
 }
-
 
 /*
  * Reloads the posts shown on the page
  * Iterates over the array of post objects, rendering HTML for each and appending it to the page
- * If a search term is being used
+ * If a search term is being used, filters accordingly
  */
 function updatePosts() {
 
@@ -86,7 +83,7 @@ function updatePosts() {
 
         let post = posts[i];
 
-        // Check if a search term used.
+        // Check if a search term is used.
         if(search !== null){
             // If so, skip this question/post if title or content doesn't match
             if (post.title.toUpperCase().indexOf(search) < 0 &&
@@ -98,7 +95,7 @@ function updatePosts() {
         // Generate a set of spans for each of the tags
         let tagSpans = '';
         for(let tag of post.tags){
-            tagSpans = tagSpans + `<span class="tag">${tag}</span>`;
+            tagSpans += `<span class="tag">${tag}</span>`;
         }
 
         // Generate the post/question element and populate its inner HTML
@@ -126,12 +123,11 @@ function updatePosts() {
 
 }
 
-
 /*
  * Loads posts from the server
- * - Send an AJAX GET request to the server
- * - JSON Array of posts sent in response
- * - Update the
+ * - Sends an AJAX GET request to the server
+ * - Receives JSON Array of posts in response
+ * - Updates the posts array and page accordingly
  */
 function loadPosts() {
 
@@ -156,7 +152,6 @@ function loadPosts() {
 
 }
 
-
 /*
  * Increase the votes for a given post, then update the page
  */
@@ -173,12 +168,10 @@ function downvote(index) {
     updatePosts();
 }
 
-
 /*
  * Submits the login form using fetch instead of XMLHttpRequest
  */
 function login(){
-
     let user = {
         user: document.getElementById('username').value,
         pass: document.getElementById('password').value
@@ -207,12 +200,10 @@ function login(){
     });
 }
 
-
 /*
  * Logs the user out using fetch
  */
 function logout(){
-
     // Send the logout request using fetch
     fetch('/users/logout', {
         method: 'POST'
