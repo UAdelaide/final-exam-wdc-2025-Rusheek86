@@ -3,36 +3,33 @@ const session = require('express-session');
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// Load route files
+// Import routes
 const userRoutes = require('./routes/userRoutes');
 const walkRoutes = require('./routes/walkRoutes');
 
-// Middleware to parse JSON and URL-encoded data
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session setup
+// Sessions
 app.use(session({
-  secret: 'top-secret-session-key',
+  secret: 'super-secret',
   resave: false,
   saveUninitialized: true
 }));
 
-// Serve static files from public folder
+// Serve static files (e.g., login.html)
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Mount routes
-app.use('/users', userRoutes);  // login, logout, register, etc.
-app.use('/walks', walkRoutes);  // walk-related endpoints if needed
+// Route setup
+app.use('/users', userRoutes);
+app.use('/walks', walkRoutes);
 
-// Default route
+// Default route (optional)
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
-});
+// Export app for use in bin/www
+module.exports = app;
