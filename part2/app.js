@@ -1,19 +1,34 @@
 const express = require('express');
+const session = require('express-session');
 const path = require('path');
-require('dotenv').config();
+const usersRouter = require('./routes/users');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Middleware to parse JSON and URL-encoded bodies
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '/public')));
+app.use(express.urlencoded({ extended: true }));
 
-// Routes
-const walkRoutes = require('./routes/walkRoutes');
-const userRoutes = require('./routes/userRoutes');
+// Setup sessions
+app.use(session({
+  secret: 'super-secret-key', // You can replace this with a more secure key
+  resave: false,
+  saveUninitialized: true
+}));
 
-app.use('/api/walks', walkRoutes);
-app.use('/api/users', userRoutes);
+// Serve static files (like login.html) from the 'public' folder
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Export the app instead of listening here
-module.exports = app;
+// Use the users route for login, logout, register etc.
+app.use('/users', usersRouter);
+
+// Default route to show basic message (optional)
+app.get('/', (req, res) => {
+  res.send('Welcome to the Dog Walking Service API');
+});
+
+// Start the server
+app.listen(PORT, () => {
+  console.log(`Server is running at http://localhost:${PORT}`);
+});
