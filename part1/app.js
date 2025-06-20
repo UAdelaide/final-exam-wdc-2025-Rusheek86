@@ -21,7 +21,7 @@ let db;
 
     // Optional: You can also insert default test data here, if needed.
   } catch (error) {
-    console.error('❌ Database connection error:', error.message);
+    console.error('Database connection error:', error.message);
   }
 })();
 
@@ -81,5 +81,5 @@ app.get('/api/walkers/summary', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`Server running at http://localhost:${PORT}`);
 });
