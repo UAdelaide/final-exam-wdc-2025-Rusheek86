@@ -99,22 +99,39 @@ createApp({
         const res = await fetch('/api/dogs');
         const dogsData = await res.json();
 
-        for (const dog of dogsData) {
-          // Attempt to get breed name from dog name (lowercase, no spaces)
-          // If you want, you can customize this logic for your actual breed mapping
-          const breed = dog.name.toLowerCase().replace(/\s/g, '-');
+        // Map dog names to Dog CEO breed keys (customize as needed)
+        const breedMap = {
+          max: 'retriever/golden',
+          luna: 'husky',
+          // add other mappings here if you know the breeds
+        };
 
-          try {
-            const imgRes = await fetch(`https://dog.ceo/api/breed/${breed}/images/random`);
-            const imgData = await imgRes.json();
-            dog.imageUrl = imgData.status === 'success' ? imgData.message : 'https://via.placeholder.com/100x80?text=No+Image';
-          } catch {
-            dog.imageUrl = 'https://via.placeholder.com/100x80?text=No+Image';
-          }
-        }
-        dogs.value = dogsData;
+        // Fetch images in parallel with Promise.all
+        const dogsWithImages = await Promise.all(
+          dogsData.map(async (dog) => {
+            const breedKey = breedMap[dog.name.toLowerCase()] || null;
+
+            if (breedKey) {
+              try {
+                const imgRes = await fetch(`https://dog.ceo/api/breed/${breedKey}/images/random`);
+                const imgData = await imgRes.json();
+                dog.imageUrl = imgData.status === 'success'
+                  ? imgData.message
+                  : 'https://via.placeholder.com/100x80?text=No+Image';
+              } catch {
+                dog.imageUrl = 'https://via.placeholder.com/100x80?text=No+Image';
+              }
+            } else {
+              // Use a generic placeholder if no breed mapping
+              dog.imageUrl = 'https://via.placeholder.com/100x80?text=Dog+Image';
+            }
+
+            return dog;
+          })
+        );
+
+        dogs.value = dogsWithImages;
       } catch {
-        // fallback if dogs API fails
         dogs.value = [];
       }
     }
@@ -128,7 +145,7 @@ createApp({
       dogs,
       loginUser,
     };
-  }
+  },
 }).mount('#app');
 </script>
 
