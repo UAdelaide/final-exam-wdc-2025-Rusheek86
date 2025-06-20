@@ -60,4 +60,49 @@ let db;
     if (count === 0) {
       await db.execute(`INSERT INTO dogs (name, breed) VALUES ('Buddy', 'Beagle'), ('Luna', 'Labrador')`);
       await db.execute(`INSERT INTO walkers (name) VALUES ('Alice'), ('Bob')`);
-      await db.execute(`INSERT INTO walkreques
+      await db.execute(`INSERT INTO walkrequests (dog_id, walker_id, status) VALUES (1, 1, 'open'), (2, 2, 'closed')`);
+      console.log('Seed data inserted.');
+    }
+  } catch (err) {
+    console.error('Error setting up database. Is MySQL running?', err.message);
+  }
+})();
+
+app.get('/api/dogs', async (req, res) => {
+  try {
+    const [rows] = await db.execute('SELECT * FROM dogs');
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch dogs', details: err.message });
+  }
+});
+
+app.get('/api/walkrequests/open', async (req, res) => {
+  try {
+    const [rows] = await db.execute("SELECT * FROM walkrequests WHERE status = 'open'");
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch open walk requests', details: err.message });
+  }
+});
+
+app.get('/api/walkers/summary', async (req, res) => {
+  try {
+    const [rows] = await db.execute(`
+      SELECT w.id, w.name, COUNT(r.id) AS total_walks
+      FROM walkers w
+      LEFT JOIN walkrequests r ON w.id = r.walker_id
+      GROUP BY w.id, w.name
+    `);
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch walkers summary', details: err.message });
+  }
+});
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
+
+module.exports = app;
