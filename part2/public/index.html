@@ -47,11 +47,18 @@
         <td>{{ dog.size }}</td>
         <td>{{ dog.owner_id }}</td>
         <td>
-          <img
-          :src="dog.imageUrl || 'https://via.placeholder.com/100x80?text=Loading...'"
-          alt="Dog Image"
-          style="max-width: 100px; max-height: 80px; object-fit: contain;"
-        />
+<img
+  v-if="dog.imageUrl"
+  :src="dog.imageUrl"
+  alt="Dog Image"
+  style="max-width: 100px; max-height: 80px; object-fit: contain;"
+/>
+<img
+  v-else
+  src="https://via.placeholder.com/100x80?text=Loading..."
+  alt="Loading"
+  style="max-width: 100px; max-height: 80px; object-fit: contain;"
+/>
         </td>
       </tr>
     </tbody>
