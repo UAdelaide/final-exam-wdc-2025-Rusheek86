@@ -102,25 +102,25 @@ createApp({
 
         // Map dog names to dog.ceo breeds
         const breedMap = {
-          max: 'labrador',
-          bella: 'dalmatian',
-          butter: 'goldenretriever',
-          lexi: 'shiba',
-          violet: 'husky'
-        };
+  max: 'labrador',
+  bella: 'dalmatian',
+  butter: 'goldenretriever',   // <-- make sure this is here
+  lexi: 'shiba',
+  violet: 'husky'
+};
 
-        for (const dog of dogsData) {
-          const breed = breedMap[dog.name.toLowerCase()] || 'hound';
-          try {
-            const imgRes = await fetch(`https://dog.ceo/api/breed/${breed}/images/random`);
-            const imgData = await imgRes.json();
-            dog.imageUrl = imgData.status === 'success'
-              ? imgData.message
-              : 'https://via.placeholder.com/100x80?text=No+Image';
-          } catch {
-            dog.imageUrl = 'https://via.placeholder.com/100x80?text=No+Image';
-          }
-        }
+for (const dog of dogsData) {
+  const breed = breedMap[dog.name.toLowerCase()] || 'hound';
+  try {
+    const imgRes = await fetch(`https://dog.ceo/api/breed/${breed}/images/random`);
+    const imgData = await imgRes.json();
+    dog.imageUrl = imgData.status === 'success'
+      ? imgData.message
+      : 'https://via.placeholder.com/100x80?text=No+Image';
+  } catch {
+    dog.imageUrl = 'https://via.placeholder.com/100x80?text=No+Image';
+  }
+}
 
         dogs.value = dogsData;
       } catch {
