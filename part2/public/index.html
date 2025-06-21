@@ -48,7 +48,7 @@
         <td>{{ dog.owner_id }}</td>
         <td>
           <img
-            :src="dog.imageUrl"
+            :src="dog.imageUrl || 'https://via.placeholder.com/100x80?text=No+Image'"
             alt="Dog Image"
             style="max-width: 100px; max-height: 80px; object-fit: contain;"
           />
