@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(session({
-  secret: 'your_strong_secret_here',  // Change in prod!
+  secret: 'your_strong_secret_here',
   resave: false,
   saveUninitialized: false,
   cookie: { secure: false }
@@ -27,7 +27,7 @@ let db;
     const connection = await mysql.createConnection({
       host: 'localhost',
       user: 'root',
-      password: '' // Set your password if needed
+      password: ''
     });
     await connection.query('CREATE DATABASE IF NOT EXISTS DogWalkService');
     await connection.end();
@@ -38,31 +38,28 @@ let db;
       password: '',
       database: 'DogWalkService'
     });
-
   } catch (err) {
-    console.error('DB setup error:', err);
+    // console.error('DB setup error:', err);
+    return;
   }
 })();
 
-// Middleware to require login
 function requireLogin(req, res, next) {
   if (!req.session.userId) {
     return res.status(401).send('Unauthorized');
   }
-  next();
+  return next();
 }
 
-// Middleware to require specific role
 function requireRole(role) {
   return (req, res, next) => {
     if (req.session.role !== role) {
       return res.status(403).send('Forbidden');
     }
-    next();
+    return next();
   };
 }
 
-// POST login route (by username)
 app.post('/users/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -81,25 +78,21 @@ app.post('/users/login', async (req, res) => {
     req.session.role = user.role;
     req.session.username = user.username;
 
-    res.json({ user: { id: user.user_id, role: user.role, username: user.username } });
-
+    return res.json({ user: { id: user.user_id, role: user.role, username: user.username } });
   } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Server error' });
+    // console.error('Login error:', err);
+    return res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Serve owner dashboard page (only logged in owners)
 app.get('/owner-dashboard', requireLogin, requireRole('owner'), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'owner-dashboard.html'));
 });
 
-// Serve walker dashboard page (only logged in walkers)
 app.get('/walker-dashboard', requireLogin, requireRole('walker'), (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'walker-dashboard.html'));
 });
 
-// Fetch dogs owned by logged-in owner (for dropdown/select)
 app.get('/owner/dogs', requireLogin, requireRole('owner'), async (req, res) => {
   try {
     const ownerId = req.session.userId;
@@ -107,14 +100,13 @@ app.get('/owner/dogs', requireLogin, requireRole('owner'), async (req, res) => {
       'SELECT dog_id, name FROM Dogs WHERE owner_id = ?',
       [ownerId]
     );
-    res.json(dogs);
+    return res.json(dogs);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch dogs' });
+    // console.error(err);
+    return res.status(500).json({ error: 'Failed to fetch dogs' });
   }
 });
 
-// Fetch owner walk requests
 app.get('/owner/walkrequests', requireLogin, requireRole('owner'), async (req, res) => {
   try {
     const ownerId = req.session.userId;
@@ -125,14 +117,13 @@ app.get('/owner/walkrequests', requireLogin, requireRole('owner'), async (req, r
       WHERE d.owner_id = ?
       ORDER BY wr.requested_time DESC
     `, [ownerId]);
-    res.json(walks);
+    return res.json(walks);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch walk requests' });
+    // console.error(err);
+    return res.status(500).json({ error: 'Failed to fetch walk requests' });
   }
 });
 
-// Fetch walker walk requests (only open)
 app.get('/walker/walkrequests', requireLogin, requireRole('walker'), async (req, res) => {
   try {
     const [walks] = await db.execute(`
@@ -142,25 +133,23 @@ app.get('/walker/walkrequests', requireLogin, requireRole('walker'), async (req,
       WHERE wr.status = 'open'
       ORDER BY wr.requested_time ASC
     `);
-    res.json(walks);
+    return res.json(walks);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to fetch walk requests' });
+    // console.error(err);
+    return res.status(500).json({ error: 'Failed to fetch walk requests' });
   }
 });
 
-// Fetch all dogs for homepage (no login required)
 app.get('/api/dogs', async (req, res) => {
   try {
     const [dogs] = await db.execute('SELECT dog_id, name, size, owner_id FROM Dogs ORDER BY dog_id ASC');
-    res.json(dogs);
+    return res.json(dogs);
   } catch (err) {
-    console.error('Failed to fetch dogs:', err);
-    res.status(500).json({ error: 'Failed to fetch dogs' });
+    // console.error('Failed to fetch dogs:', err);
+    return res.status(500).json({ error: 'Failed to fetch dogs' });
   }
 });
 
-// Logout route (clears session and redirects to login)
 app.get('/logout', (req, res) => {
   req.session.destroy(() => {
     res.clearCookie('connect.sid');
@@ -168,7 +157,6 @@ app.get('/logout', (req, res) => {
   });
 });
 
-// Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
 module.exports = app;
