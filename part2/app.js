@@ -13,10 +13,10 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(session({
-  secret: 'your_strong_secret_here',  // change to a strong secret in production
+  secret: 'your_strong_secret_here',// change to a strong secret in production
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false }  // set to true if HTTPS
+  cookie: { secure: false }// set to true if HTTPS
 }));
 
 let db;
@@ -27,7 +27,7 @@ let db;
     const connection = await mysql.createConnection({
       host: 'localhost',
       user: 'root',
-      password: ''  // update with your DB password if needed
+      password: ''// update with your DB password if needed
     });
     await connection.query('CREATE DATABASE IF NOT EXISTS DogWalkService');
     await connection.end();
