@@ -16,7 +16,7 @@ app.use(session({
   secret: 'your_strong_secret_here',  // change to a strong secret in production
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false }  // set true if HTTPS
+  cookie: { secure: false }  // set to true if HTTPS
 }));
 
 let db;
@@ -62,13 +62,9 @@ function requireRole(role) {
   };
 }
 
-// POST login route - login by username and password
+// POST login route
 app.post('/users/login', async (req, res) => {
   const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password are required' });
-  }
 
   try {
     const [users] = await db.execute('SELECT * FROM Users WHERE username = ?', [username]);
@@ -156,7 +152,7 @@ app.get('/walker/walkrequests', requireLogin, requireRole('walker'), async (req,
 // New API endpoint: fetch all dogs for homepage (no login required)
 app.get('/api/dogs', async (req, res) => {
   try {
-    const [dogs] = await db.execute('SELECT dog_id, name, size FROM Dogs ORDER BY dog_id ASC');
+    const [dogs] = await db.execute('SELECT dog_id, name, size, owner_id FROM Dogs ORDER BY dog_id ASC');
     res.json(dogs);
   } catch (err) {
     console.error('Failed to fetch dogs:', err);
