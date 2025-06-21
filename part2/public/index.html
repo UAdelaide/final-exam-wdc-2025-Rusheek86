@@ -12,6 +12,9 @@
 <div id="app" class="container py-5">
   <h1 class="mb-4 text-primary">Welcome to the Dog Walking Service!</h1>
 
+  <!-- Logout Button (optional, only shows if logged in) -->
+  <button v-if="showLogout" class="btn btn-secondary mb-4" @click="logoutUser">Logout</button>
+
   <!-- Login Form -->
   <div class="card p-4 shadow-sm mb-5">
     <form @submit.prevent="loginUser">
@@ -37,7 +40,7 @@
         <th>Name</th>
         <th>Size</th>
         <th>Owner ID</th>
-        <th>Photo</th>
+        <th>Image</th>
       </tr>
     </thead>
     <tbody>
@@ -56,7 +59,6 @@
       </tr>
     </tbody>
   </table>
-
 </div>
 
 <script>
@@ -68,6 +70,7 @@ createApp({
     const password = ref('');
     const error = ref('');
     const dogs = ref([]);
+    const showLogout = ref(false);
 
     async function loginUser() {
       try {
@@ -80,6 +83,7 @@ createApp({
         const data = await res.json();
 
         if (res.ok) {
+          showLogout.value = true;
           if (data.user.role === 'owner') {
             window.location.href = 'owner-dashboard.html';
           } else if (data.user.role === 'walker') {
@@ -95,6 +99,11 @@ createApp({
       }
     }
 
+    async function logoutUser() {
+      await fetch('/logout', { credentials: 'include' });
+      window.location.href = '/';
+    }
+
     // Fetch all dogs and their images with breed mapping
     async function fetchDogs() {
       try {
@@ -104,15 +113,14 @@ createApp({
         // Map dog names to dog.ceo breeds
         const breedMap = {
           max: 'labrador',
-          violet: 'beagle',
-          butter: 'bulldog',
-          lexi: 'pug',
+          violet: 'poodle',
+          butter: 'goldenretriever',
+          lexi: 'shiba',
           bella: 'dalmatian'
         };
 
         for (const dog of dogsData) {
           const breed = breedMap[dog.name.toLowerCase()] || 'hound';
-
           try {
             const imgRes = await fetch(`https://dog.ceo/api/breed/${breed}/images/random`);
             const imgData = await imgRes.json();
@@ -136,6 +144,8 @@ createApp({
       error,
       dogs,
       loginUser,
+      logoutUser,
+      showLogout
     };
   }
 }).mount('#app');
