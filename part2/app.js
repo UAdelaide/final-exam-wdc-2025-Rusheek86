@@ -13,21 +13,21 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use(session({
-  secret: 'your_strong_secret_here',
+  secret: 'your_strong_secret_here',  // Change in prod!
   resave: false,
   saveUninitialized: false,
-  cookie: { secure: false } // set to true if HTTPS
+  cookie: { secure: false }
 }));
 
 let db;
 
-// Initialize database connection and create DB if not exists
+// Initialize DB connection and create DB if not exists
 (async () => {
   try {
     const connection = await mysql.createConnection({
       host: 'localhost',
       user: 'root',
-      password: '' // update as needed
+      password: '' // Set your password if needed
     });
     await connection.query('CREATE DATABASE IF NOT EXISTS DogWalkService');
     await connection.end();
@@ -38,6 +38,7 @@ let db;
       password: '',
       database: 'DogWalkService'
     });
+
   } catch (err) {
     console.error('DB setup error:', err);
   }
@@ -148,7 +149,7 @@ app.get('/walker/walkrequests', requireLogin, requireRole('walker'), async (req,
   }
 });
 
-// New API endpoint: fetch all dogs for homepage (no login required)
+// Fetch all dogs for homepage (no login required)
 app.get('/api/dogs', async (req, res) => {
   try {
     const [dogs] = await db.execute('SELECT dog_id, name, size, owner_id FROM Dogs ORDER BY dog_id ASC');
